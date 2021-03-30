@@ -11,4 +11,4 @@
 
 ### CMR Repositories ###
 # cmr_os
-- git: {local-name: cmr_os, uri: 'git@gitlab.projekt.uni-hannover.de:imes-projekt-cmg_roboter/cmr-code/cmr_os.git', version: master}
+- git: {local-name: cmr_os, uri: 'https://github.com/MarvinStuede/cmr_os.git', version: master}
