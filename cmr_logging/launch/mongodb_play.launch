@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!--
+
+/**
+* @file   mongodb_play.launch
+* @author Marvin Stüde (Marvin.Stuede@imes.uni-hannover.de)
+* @date   01/2021
+*
+* @brief  Replays messages from mongodb
+*/
+-->
+<launch>
+
+    <arg name="topics" default="/base/laser/scan_filtered" doc="Topics to publish"/>
+    <arg name="start" doc="Start time. Formatted 'd/m/y H:M' e.g. '06/07/14 06:38'"/>
+    <arg name="end" doc="End time. Formatted 'd/m/y H:M' e.g. '06/07/14 06:38'"/>
+
+    <!--Arguments with MongoDB parameters -->
+    <arg name="mongodb_certfile" default="$(find cmr_logging)/cfg/mongodb.pem" doc="Path to user SSL certificate"/>
+    <arg name="mongodb_ca_certs" default="$(find cmr_logging)/cfg/cmrpersdb_rootCA.pem" doc="Path to CA Chain file"/>
+
+    <!-- Load config and arguments to parameter server -->
+    <rosparam command="load" file="$(find cmr_logging)/cfg/mongodb_config.yaml" />
+    <param name="mongodb_certfile" type="string" value="$(arg mongodb_certfile)"/>
+    <param name="mongodb_ca_certs" type="string" value="$(arg mongodb_ca_certs)"/>
+
+    <!-- Start the play script. Workaround with bash script necessary to avoid overwrite of node names. Play script uses
+    different node names for different topics -->
+     <arg name="mongodb_name" default="$(eval read_param.py mongodb_name)" />
+    <node pkg="cmr_logging" type="mongodb_play.sh" name="mongodb_play_starter" output="screen"
+        args="&quot;$(arg mongodb_name)&quot; &quot;$(arg start)&quot; &quot;$(arg end)&quot; &quot;$(arg topics)&quot;">
+    </node>
+
+
+</launch>

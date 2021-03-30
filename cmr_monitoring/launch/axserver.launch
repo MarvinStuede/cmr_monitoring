@@ -1,0 +1,5 @@
+<!-- Launch file to start the axserver -->
+<?xml version="1.0"?>
+<launch>
+   <node pkg="roslaunch_axserver" type="roslaunch_server.py" name="roslaunch_server" output="screen" respawn="true"/>
+</launch>

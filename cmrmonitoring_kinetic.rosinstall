@@ -1,0 +1,14 @@
+# Behavior Tree ROS
+# Fork that includes a BT Topic logger
+- git: {local-name: behavior_tree_ros, uri: 'https://github.com/MarvinStuede/BehaviorTree.ROS.git'}
+
+# Monitoring: Monitoring
+- git: {local-name: monitoring, uri: 'https://github.com/MarvinStuede/monitoring.git', version: cmr_sassi}
+
+# MongoDB Store. To log ROS Messages to mongo DB
+# Fork implements MongoDB authentication
+- git: {local-name: mongodb_store, uri: 'https://github.com/MarvinStuede/mongodb_store.git', version: stuede}
+
+### CMR Repositories ###
+# cmr_os
+- git: {local-name: cmr_os, uri: 'git@gitlab.projekt.uni-hannover.de:imes-projekt-cmg_roboter/cmr-code/cmr_os.git', version: master}

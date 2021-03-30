@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--
+
+/**
+* @file log_to_db.launch
+* @author Marvin Stüde (Marvin.Stuede@imes.uni-hannover.de)
+* @date   01/2021
+*
+* @brief Launch file to start logging to mongo_db, includes topic throttling to limit bandwith
+*/
+-->
+<launch>
+
+  <arg name="cfg_path_unthrottled" default="$(find cmr_logging)/cfg/log_topics_unthrottled_nav.yaml"/>
+  <arg name="cfg_path_throttled" default="$(find cmr_logging)/cfg/log_topics_throttled_nav.yaml"/>
+
+  <group ns="db_logging">
+        <!-- Load topics that will be recorded directly -->
+        <rosparam command="load" file="$(arg cfg_path_unthrottled)" />
+        <!-- Load topics that should be throttled with a desired freq. -->
+        <rosparam command="load" file="$(arg cfg_path_throttled)" />
+        <!-- Create a param with a list of all topics that should be logged -->
+        <node pkg="cmr_logging" type="topics_to_param.py" name="topics_to_param" args="$(arg cfg_path_throttled)" output="screen"/>
+        <!-- Start the throttling nodes -->
+        <node pkg="cmr_logging" type="start_throttlers.py" name="start_logging_throttlers" args="$(arg cfg_path_throttled)" output="screen"/>
+        <!-- Start logging to MongoDB -->
+        <include file="$(find cmr_logging)/launch/mongodb_log.launch"/>
+  </group>
+
+</launch>

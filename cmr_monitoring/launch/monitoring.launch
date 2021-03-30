@@ -1,0 +1,56 @@
+<!-- Launch file to start the monitors -->
+<?xml version="1.0"?>
+<launch>
+  <arg name="use_node_mon" default="true"/>
+  <arg name="use_statistics_mon" default="false"/>
+  <arg name="use_topic_mon" default="false"/>
+  <arg name="use_rtabmap_mon" default="true"/>
+  <arg name="use_move_base_mon" default="true"/>
+
+
+  <group ns="monitors">
+    <group ns="system">
+      <!-- <include file="$(find monitoring_monitors_system)/launch/cpu_monitor.launch" />-->
+      <!-- <include file="$(find monitoring_monitors_system)/launch/nw_monitor.launch" />-->
+      <!-- <include file="$(find monitoring_monitors_system)/launch/ram_monitor.launch" />-->
+
+      <!-- NTP Monitor to check clock difference between different hosts -->
+     <node pkg="monitoring_monitors_system" type="ntp_monitor.py" name="ntp_monitor" 	output="screen">
+        <param name="monitoring/frequency" type="double" value="0.05"/>
+        <rosparam param="ntp_servers">["cmr01-pi", "mp-500-luh", "cmr01-jetson"]</rosparam>
+      </node>
+    </group>
+    <group ns="ros">
+      <!-- Node monitor to check if nodes are running -->
+         <node if="$(arg use_node_mon)" pkg="monitoring_monitors_ros" type="nodemonitor.py" name="node_monitor" output="screen" respawn="true">
+        <rosparam command="load" file="$(find cmr_monitoring)/cfg/node_mon_operating.yaml" />
+        <rosparam command="load" file="$(find cmr_monitoring)/cfg/node_mon_charging.yaml" />
+      </node>
+      <!-- Topic monitor to check frequency -->
+      <node if="$(arg use_topic_mon)" pkg="monitoring_monitors_ros" type="topicmonitor.py" name="topic_monitor" output="screen" respawn="true">
+        <rosparam command="load" file="$(find cmr_monitoring)/cfg/topic_mon_operating.yaml" />
+      </node>
+      <!-- Stastics monitor to check topic statistics, such as frequency -->
+      <node if="$(arg use_statistics_mon)" pkg="monitoring_monitors_ros" type="statistics_monitoring_node" name="statistics_monitoring" output="screen"  respawn="true">
+        <rosparam command="load" file="$(find cmr_monitoring)/cfg/statistics_mon_operating.yaml" />
+      </node>
+    </group>
+    <!-- RTABMAP Monitor to check if localization is working -->
+    <group ns="rtabmap" if="$(arg use_rtabmap_mon)" >
+      <param name="warn_dur" type="double" value="10.0"/>
+      <param name="rtabmap_monitor/monitoring/frequency" type="double" value="0.25"/>
+      <param name="error_dur" type="double" value="20.0"/>
+      <node pkg="cmr_monitoring" type="rtabmap_monitor" name="rtabmap_monitor" output="screen"/>
+    </group>
+    <!-- MoveBase Monitor to check if move base still receives sensor information -->
+    <group ns="move_base" if="$(arg use_move_base_mon)" >
+      <param name="move_base_monitor/monitoring/frequency" type="double" value="0.2"/>
+      <param name="warn_dur_not_updated" type="int" value="10"/>
+      <param name="error_dur_not_updated" type="int" value="20"/>
+      <param name="warn_dur_no_feedback" type="int" value="30"/>
+      <param name="error_dur_no_feedback" type="int" value="60"/>
+      <node pkg="cmr_monitoring" type="move_base_monitor" name="move_base_monitor" output="screen"/>
+    </group>
+
+  </group>
+</launch>

@@ -1,0 +1,19 @@
+# Topics to throttle
+throttled_topics:
+  # Each block defined by a frequency and corresponding topics
+  freq1:
+    frequency: 0.25
+    topics:
+      - /base/relayboard_v2/state
+      - /move_base/current_goal
+      - /odometry/filtered
+      - /robot_pose
+      - /rtabmap/info
+      - /tf
+# Latched topics to republish in desired frequency
+latched_topics:
+  freq1:
+    frequency: 0.0025
+    topics:
+      - /rtabmap/grid_map
+      - /tf_static

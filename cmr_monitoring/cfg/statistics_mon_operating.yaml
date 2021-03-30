@@ -1,0 +1,29 @@
+monitoring:
+  frequency: 0.1                                  # Frequency to send the monitored values
+monitor_mode : 5                                # AggregationStrategies mode: 1 LAST, 2 FIRST, 3 MIN, 4 MAX, 5 AVG#
+timeTilDelete: 3                                # Time for delete value from the  Message
+topics: [velo, laser]                     # List of titel name for the following groupe 
+
+velo:
+  topic: /velodyne_points                               # The 'Topic' value in statistic topic,Which user want to watch by statistic monitor
+  source: /velodyne_nodelet_manager                            # Publisher for the 'Topic'
+  destination: /pcl_repub_velo                      # Subscriber for the 'Topic'
+  frequency: 6                                  # Publish frequency of the 'Topic' that User have configured
+  dFrequency: 0.75                               # Tolerance of the frequency
+  size: -1                                       # Size of the message in the 'Topic'
+  dSize: 1                                      # Tolerance of the size
+
+  type: sensor_msgs::PointCloud2                    # Message tpye of the 'Topic'
+  errorlevel: 0.5                               # errorlevel of the Warn message
+
+laser:
+  topic: /base/laser/scan_filtered                               # The 'Topic' value in statistic topic,Which user want to watch by statistic monitor
+  source: /base/laser/laser_filter # Publisher for the 'Topic'
+  destination: /base/velocity_smoother                      # Subscriber for the 'Topic'
+  frequency: 12.7                                  # Publish frequency of the 'Topic' that User have configured
+  dFrequency: 2.0                               # Tolerance of the frequency
+  size: -1                                       # Size of the message in the 'Topic'
+  dSize: 1                                      # Tolerance of the size
+
+  type: sensor_msgs::LaserScan                    # Message tpye of the 'Topic'
+  errorlevel: 0.5                               # errorlevel of the Warn message

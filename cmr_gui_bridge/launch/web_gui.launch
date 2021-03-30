@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+	<remap from="/map" to="/rtabmap/grid_map"/>
+
+        <!-- LAUNCH WEB VIDEO SERVER -->
+        <arg name="port" default="8087"/>
+
+        <node name="web_video_server" pkg="web_video_server" type="web_video_server" respawn="true">
+            <param name="port" type="int" value="$(arg port)"/>
+
+        </node>
+        <!-- LAUNCH GUI WEBSOCKET -->
+        <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+	<!-- Launch http server for teleop website -->
+	<node pkg="cmr_gui_bridge" type="web_server.sh" name="teleop_web_server"/>
+	<node name="initial_pose_action" pkg="cmr_gui_bridge" type="initial_pose_publisher.py" output="screen" respawn="true"/>
+</launch>

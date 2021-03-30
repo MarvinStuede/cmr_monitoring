@@ -1,0 +1,144 @@
+<?xml version="1.0"?>
+<root>
+    <TreeNodesModel>
+
+        <SubTree ID="ConfigureMonitoring">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <inout_port default="rtabmap_strike" name="rtabmap_strike"/>
+        </SubTree>
+        <Condition ID="CpuMonitor">
+            <input_port name="description"/>
+        </Condition>
+        <Action ID="DeleteStatus">
+            <input_port name="key" type="std::string"/>
+        </Action>
+        <Action ID="ErrorIsNew">
+            <input_port name="description" type="std::string"/>
+            <input_port name="key" type="std::string"/>
+        </Action>
+
+        <Action ID="GroupFromKey">
+            <output_port default="{group}" name="group"/>
+            <input_port default="{key}" name="key"/>
+        </Action>
+        <Action ID="GroupFromTopic">
+            <output_port name="group"/>
+            <input_port name="topic"/>
+        </Action>
+        <Condition ID="GroupNotBlocked">
+            <input_port default="{blocked_groups}" name="blocked_groups"/>
+            <input_port default="{group}" name="group"/>
+        </Condition>
+        <Action ID="KillNodeFromGroup">
+            <input_port default="{group}" name="group"/>
+            <output_port default="{kill_node}" name="kill_node"/>
+        </Action>
+        <Action ID="KillROSNode">
+            <input_port name="node" type="std::string"/>
+        </Action>
+        <SubTree ID="KillRemainingNodes">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="parameter_set"/>
+        </SubTree>
+        <Action ID="LaunchFileFromGroup">
+            <input_port default="{group}" name="group"/>
+            <output_port name="launch_file"/>
+            <output_port name="pkg"/>
+        </Action>
+        <Action ID="Monitoring">
+            <input_port name="blocked_groups"/>
+            <output_port name="description"/>
+            <output_port name="error_level"/>
+            <output_port name="key"/>
+        </Action>
+        <Condition ID="MonitoringReconfigured"/>
+        <Condition ID="MoveBaseMonitor">
+            <input_port name="description"/>
+        </Condition>
+        <Condition ID="NTPMonitor">
+            <input_port name="description"/>
+        </Condition>
+        <Condition ID="NodeMonitor">
+            <input_port name="description" type="std::string"/>
+        </Condition>
+        <Condition ID="NwMonitor">
+            <input_port name="description"/>
+        </Condition>
+        <SubTree ID="ProcessStatus">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="desc" name="desc"/>
+            <input_port default="err" name="err"/>
+            <input_port default="key" name="key"/>
+            <output_port default="status" name="status"/>
+        </SubTree>
+        <SubTree ID="RTABMapHandling">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="key" name="key"/>
+            <input_port default="rtabmap_strike" name="rtabmap_strike"/>
+            <input_port default="status" name="status"/>
+        </SubTree>
+        <Condition ID="RTABMapMonitor">
+            <input_port name="description"/>
+        </Condition>
+        <Condition ID="RamMonitor">
+            <input_port name="description"/>
+        </Condition>
+        <Action ID="ReconfigureMonitoring">
+            <input_port name="parameter_set"/>
+            <output_port name="parameter_set_out"/>
+        </Action>
+        <SubTree ID="RestartNode">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="blocked_groups" name="blocked_groups"/>
+            <input_port default="desc" name="desc"/>
+            <input_port default="key" name="key"/>
+            <input_port default="status" name="status"/>
+        </SubTree>
+        <Action ID="SetDelayAfterLaunch">
+            <output_port default="{delay}" name="delay"/>
+            <input_port default="{launch_file}" name="launch_file"/>
+        </Action>
+        <Action ID="SetKillGroups">
+            <output_port name="curr_kill_group"/>
+            <input_port default="{parameter_set}" name="parameter_set"/>
+        </Action>
+
+        <Action ID="StartLaunchFile">
+            <input_port default="{blocked_groups}" name="blocked_groups"/>
+            <input_port default="{group_block}" name="group_block"/>
+            <input_port name="launch_file"/>
+            <input_port name="pkg"/>
+        </Action>
+        <Action ID="StartLaunchFiles">
+            <output_port name="launch_file"/>
+            <output_port name="pkg"/>
+        </Action>
+        <Condition ID="StatMonitor">
+            <input_port name="description"/>
+        </Condition>
+        <Condition ID="StatusError">
+            <input_port name="description" type="std::string"/>
+            <input_port name="error_level" type="double"/>
+            <input_port name="key" type="std::string"/>
+        </Condition>
+        <Condition ID="StatusInfo">
+            <input_port name="description" type="std::string"/>
+            <input_port name="error_level" type="double"/>
+            <input_port name="key" type="std::string"/>
+        </Condition>
+        <Action ID="StatusToParamServer">
+            <input_port name="description" type="std::string"/>
+            <input_port name="key" type="std::string"/>
+            <input_port name="rewrite_stamp" type="bool"/>
+        </Action>
+        <Condition ID="StatusWarn">
+            <input_port name="description" type="std::string"/>
+            <input_port name="error_level" type="double"/>
+            <input_port name="key" type="std::string"/>
+        </Condition>
+        <Condition ID="TopicMonitor">
+            <input_port name="description"/>
+        </Condition>
+    </TreeNodesModel>
+</root>
+

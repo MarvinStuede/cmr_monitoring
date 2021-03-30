@@ -1,0 +1,371 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="Monitoring">
+    <!-- ////////// -->
+    <BehaviorTree ID="ConfigureMonitoring">
+        <Sequence>
+            <Fallback>
+                <Condition ID="MonitoringReconfigured"/>
+                <Sequence>
+                    <SetBlackboard name="ResetParameter" output_key="parameter_set" value="NOT_SET"/>
+                    <SetBlackboard name="ResetRTABMAP" output_key="rtabmap_strike" value="0"/>
+                </Sequence>
+            </Fallback>
+            <IfThenElse>
+                <Condition ID="Charging"/>
+                <Fallback>
+                    <BlackboardCheckString return_on_mismatch="FAILURE" value_A="{parameter_set}" value_B="CHARGING">
+                        <AlwaysSuccess/>
+                    </BlackboardCheckString>
+                    <Sequence>
+                        <Action ID="ReconfigureMonitoring" parameter_set="CHARGING" parameter_set_out="{parameter_set}"/>
+                        <ForceSuccess>
+                            <Sequence>
+                                <Action ID="Speak" text="Gute Nacht!"/>
+                                <Action ID="FacialExpression" duration="100000" expression="SLEEP"/>
+                            </Sequence>
+                        </ForceSuccess>
+                        <SubTree ID="KillRemainingNodes" __shared_blackboard="false" parameter_set="parameter_set"/>
+                    </Sequence>
+                </Fallback>
+                <Fallback>
+                    <BlackboardCheckString return_on_mismatch="FAILURE" value_A="{parameter_set}" value_B="OPERATING">
+                        <AlwaysSuccess/>
+                    </BlackboardCheckString>
+                    <Sequence>
+                        <Action ID="ReconfigureMonitoring" parameter_set="OPERATING" parameter_set_out="{parameter_set}"/>
+                        <ForceSuccess>
+                            <Sequence>
+                                <Action ID="Speak" text="Guten Morgen!"/>
+                                <Action ID="FacialExpression" duration="5.0" expression="NEUTRAL"/>
+                            </Sequence>
+                        </ForceSuccess>
+                        <SubTree ID="KillRemainingNodes" __shared_blackboard="false" parameter_set="parameter_set"/>
+                    </Sequence>
+                </Fallback>
+            </IfThenElse>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="KillRemainingNodes">
+        <KeepRunningUntilFailure>
+            <Sequence>
+                <Action ID="SetKillGroups" curr_kill_group="{curr_group}" parameter_set="{parameter_set}"/>
+                <ForceSuccess>
+                    <Sequence>
+                        <Action ID="KillNodeFromGroup" group="{curr_group}" kill_node="{curr_node}"/>
+                        <Action ID="KillROSNode" node="{curr_node}"/>
+                    </Sequence>
+                </ForceSuccess>
+            </Sequence>
+        </KeepRunningUntilFailure>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="Monitoring">
+        <Sequence>
+            <SubTree ID="ConfigureMonitoring" __shared_blackboard="false" rtabmap_strike="rtabmap_strike"/>
+            <Action ID="Monitoring" blocked_groups="{blocked_groups}" description="{desc}" error_level="{err}" key="{key}"/>
+            <SubTree ID="ProcessStatus" __shared_blackboard="false" desc="desc" err="err" key="key" status="status"/>
+            <Fallback name="ErrorType">
+                <Sequence>
+                    <Condition ID="RTABMapMonitor" description="{desc}"/>
+                    <SubTree ID="RTABMapHandling" __shared_blackboard="false" key="key" rtabmap_strike="rtabmap_strike" status="status"/>
+                </Sequence>
+                <Sequence>
+                    <Condition ID="MoveBaseMonitor" description="{desc}"/>
+                    <SetBlackboard output_key="key" value="/move_base"/>
+                    <SubTree ID="RestartNode" __shared_blackboard="false" blocked_groups="blocked_groups" desc="desc" key="key" status="status"/>
+                </Sequence>
+                <Sequence>
+                    <Condition ID="NodeMonitor" description="{desc}"/>
+                    <SubTree ID="RestartNode" __shared_blackboard="false" blocked_groups="blocked_groups" desc="desc" key="key" status="status"/>
+                </Sequence>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="ProcessStatus">
+        <Fallback>
+            <Sequence>
+                <Condition ID="StatusInfo" description="{desc}" error_level="{err}" key="{key}"/>
+                <Action ID="StatusToParamServer" description="{desc}" key="{key}" rewrite_stamp="true"/>
+                <SetBlackboard output_key="status" value="INFO"/>
+                <Action ID="ROSOut" level="INFO" msg="Everything ok!" throttle_period="120"/>
+            </Sequence>
+            <Sequence>
+                <Condition ID="StatusWarn" description="{desc}" error_level="{err}" key="{key}"/>
+                <Action ID="StatusToParamServer" description="{desc}" key="{key}" rewrite_stamp="true"/>
+                <SetBlackboard output_key="status" value="WARN"/>
+            </Sequence>
+            <Sequence>
+                <Condition ID="StatusError" description="{desc}" error_level="{err}" key="{key}"/>
+                <Action ID="StatusToParamServer" description="{desc}" key="{key}" rewrite_stamp="false"/>
+                <SetBlackboard output_key="status" value="ERROR"/>
+            </Sequence>
+        </Fallback>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="RTABMapHandling">
+        <Fallback>
+            <BlackboardCheckString return_on_mismatch="FAILURE" value_A="INFO" value_B="{status}">
+                <SetBlackboard name="ResetStrike" output_key="rtabmap_strike" value="0"/>
+            </BlackboardCheckString>
+            <BlackboardCheckString return_on_mismatch="FAILURE" value_A="ERROR" value_B="{status}">
+                <Switch4 case_1="0" case_2="1" case_3="2" case_4="3" name="SwitchStrikeCase" variable="{rtabmap_strike}">
+                    <Sequence>
+                        <Action ID="RotateToRelocalize"/>
+                        <Action ID="SaveTimestamp" timestamp="{timestamp}"/>
+                        <SetBlackboard name="SetFirstStrike" output_key="rtabmap_strike" value="1"/>
+                    </Sequence>
+                    <ForceSuccess>
+                        <Sequence>
+                            <Fallback>
+                                <Condition ID="TimePassed" duration="60" timestamp="{timestamp}"/>
+                                <ForceFailure>
+                                    <Action ID="RotateToRelocalize"/>
+                                </ForceFailure>
+                            </Fallback>
+                            <ForceSuccess>
+                                <Sequence>
+                                    <SetBlackboard output_key="key" value="/rtabmap/rtabmap"/>
+                                    <Sequence name="KillRTABMAP">
+                                        <Action ID="GroupFromKey" group="{group}" key="{key}"/>
+                                        <Action ID="KillNodeFromGroup" group="{group}" kill_node="{kill_node}"/>
+                                        <Action ID="KillROSNode" node="{kill_node}"/>
+                                    </Sequence>
+                                    <SetBlackboard output_key="key" value="/move_base"/>
+                                    <Sequence name="KillMoveBase">
+                                        <Action ID="GroupFromKey" group="{group}" key="{key}"/>
+                                        <Action ID="KillNodeFromGroup" group="{group}" kill_node="{kill_node}"/>
+                                        <Action ID="KillROSNode" node="{kill_node}"/>
+                                    </Sequence>
+                                </Sequence>
+                            </ForceSuccess>
+                            <Action ID="SaveTimestamp" timestamp="{timestamp}"/>
+                            <SetBlackboard name="SetSecondStrike" output_key="rtabmap_strike" value="2"/>
+                        </Sequence>
+                    </ForceSuccess>
+                    <Sequence>
+                        <Action ID="RotateToRelocalize"/>
+                        <Action ID="SaveTimestamp" timestamp="{timestamp}"/>
+                        <SetBlackboard name="SetThirdStrike" output_key="rtabmap_strike" value="3"/>
+                    </Sequence>
+                    <Sequence>
+                        <Fallback>
+                            <Condition ID="TimePassed" duration="60" timestamp="{timestamp}"/>
+                            <ForceFailure>
+                                <Action ID="RotateToRelocalize"/>
+                            </ForceFailure>
+                        </Fallback>
+                        <Action ID="ROSParamToBlackboard" entry="{localization_msg}" param="localization_lost"/>
+                        <IfThenElse name="IfSuccesfulReset">
+                            <Action ID="CallSupervisor" message="{localization_msg}"/>
+                            <SetBlackboard name="ResetStrike" output_key="rtabmap_strike" value="0"/>
+                            <SetBlackboard name="SetFourthStrike" output_key="rtabmap_strike" value="0"/>
+                        </IfThenElse>
+                    </Sequence>
+                    <AlwaysSuccess/>
+                </Switch4>
+            </BlackboardCheckString>
+        </Fallback>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <BehaviorTree ID="RestartNode">
+        <BlackboardCheckString name="CheckIfError" return_on_mismatch="FAILURE" value_A="{status}" value_B="ERROR">
+            <Sequence>
+                <Action ID="GroupFromKey" group="{group}" key="{key}"/>
+                <Fallback>
+                    <Condition ID="GroupNotBlocked" blocked_groups="{blocked_groups}" group="{group}"/>
+                    <ForceFailure>
+                        <Action ID="ROSOut" level="INFO" msg="Group still blocked. Restart process skipped." throttle_period="0"/>
+                    </ForceFailure>
+                </Fallback>
+                <Fallback>
+                    <Sequence name="KilllSequence">
+                        <Action ID="KillNodeFromGroup" group="{group}" kill_node="{kill_node}"/>
+                        <Action ID="KillROSNode" node="{kill_node}"/>
+                    </Sequence>
+                    <Sequence name="LaunchSequence">
+                        <Action ID="LaunchFileFromGroup" group="{group}" launch_file="{launch_file}" pkg="{pkg}"/>
+                        <Action ID="StartLaunchFile" blocked_groups="{blocked_groups}" group_block="{group}" launch_file="{launch_file}" pkg="{pkg}"/>
+                        <Delay delay_msec="500">
+                            <AlwaysSuccess/>
+                        </Delay>
+                        <Action ID="ROSOut" level="INFO" msg="Launch file started" throttle_period="0"/>
+                    </Sequence>
+                </Fallback>
+            </Sequence>
+        </BlackboardCheckString>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="CallSupervisor">
+            <input_port name="message" type="std::string"/>
+        </Action>
+        <Condition ID="Charging"/>
+        <SubTree ID="ConfigureMonitoring">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="rtabmap_strike" name="rtabmap_strike"/>
+        </SubTree>
+        <Condition ID="CpuMonitor">
+            <input_port name="description"/>
+        </Condition>
+        <Action ID="DeleteStatus">
+            <input_port name="key" type="std::string"/>
+        </Action>
+        <Action ID="ErrorIsNew">
+            <input_port name="description" type="std::string"/>
+            <input_port name="key" type="std::string"/>
+        </Action>
+        <Action ID="FacialExpression">
+            <input_port name="duration" type="double"/>
+            <input_port name="expression" type="std::string"/>
+        </Action>
+        <Action ID="GroupFromKey">
+            <output_port name="group" type="std::string"/>
+            <input_port name="key" type="std::string"/>
+        </Action>
+        <Action ID="GroupFromTopic">
+            <output_port name="group"/>
+            <input_port name="topic"/>
+        </Action>
+        <Condition ID="GroupNotBlocked">
+            <input_port name="blocked_groups" type="std::map&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, ros::Time, std::less&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt;, std::allocator&lt;std::pair&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const, ros::Time&gt; &gt; &gt;"/>
+            <input_port name="group" type="std::string"/>
+        </Condition>
+        <Action ID="KillNodeFromGroup">
+            <input_port name="group" type="std::string"/>
+            <output_port name="kill_node" type="std::string"/>
+        </Action>
+        <Action ID="KillROSNode">
+            <input_port name="node" type="std::string"/>
+        </Action>
+        <SubTree ID="KillRemainingNodes">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port name="parameter_set"/>
+        </SubTree>
+        <Action ID="LaunchFileFromGroup">
+            <input_port name="group" type="std::string"/>
+            <output_port name="launch_file" type="std::string"/>
+            <output_port name="pkg" type="std::string"/>
+        </Action>
+        <Action ID="Monitoring">
+            <inout_port name="blocked_groups" type="std::map&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, ros::Time, std::less&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt;, std::allocator&lt;std::pair&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const, ros::Time&gt; &gt; &gt;"/>
+            <output_port name="description" type="std::string"/>
+            <output_port name="error_level" type="double"/>
+            <output_port name="key" type="std::string"/>
+        </Action>
+        <Condition ID="MonitoringReconfigured"/>
+        <Condition ID="MoveBaseMonitor">
+            <input_port name="description" type="std::string"/>
+        </Condition>
+        <Condition ID="NTPMonitor">
+            <input_port name="description"/>
+        </Condition>
+        <Condition ID="NodeMonitor">
+            <input_port name="description" type="std::string"/>
+        </Condition>
+        <Condition ID="NwMonitor">
+            <input_port name="description"/>
+        </Condition>
+        <SubTree ID="ProcessStatus">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="desc" name="desc"/>
+            <input_port default="err" name="err"/>
+            <input_port default="key" name="key"/>
+            <output_port default="status" name="status"/>
+        </SubTree>
+        <Action ID="ROSOut">
+            <input_port name="level" type="std::string"/>
+            <input_port name="msg" type="std::string"/>
+            <input_port name="throttle_period" type="int"/>
+        </Action>
+        <Action ID="ROSParamToBlackboard">
+            <output_port name="entry" type="std::string"/>
+            <input_port name="param" type="std::string"/>
+        </Action>
+        <SubTree ID="RTABMapHandling">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="key" name="key"/>
+            <input_port default="rtabmap_strike" name="rtabmap_strike"/>
+            <input_port default="status" name="status"/>
+        </SubTree>
+        <Condition ID="RTABMapMonitor">
+            <input_port name="description" type="std::string"/>
+        </Condition>
+        <Condition ID="RamMonitor">
+            <input_port name="description"/>
+        </Condition>
+        <Action ID="ReconfigureMonitoring">
+            <input_port name="parameter_set" type="std::string"/>
+            <output_port name="parameter_set_out" type="std::string"/>
+        </Action>
+        <SubTree ID="RestartNode">
+            <input_port default="false" name="__shared_blackboard">If false (default), the Subtree has an isolated blackboard and needs port remapping</input_port>
+            <input_port default="blocked_groups" name="blocked_groups"/>
+            <input_port default="desc" name="desc"/>
+            <input_port default="key" name="key"/>
+            <input_port default="status" name="status"/>
+        </SubTree>
+        <Action ID="RotateToRelocalize"/>
+        <Action ID="SaveTimestamp">
+            <output_port name="timestamp" type="double"/>
+        </Action>
+        <Action ID="SendMessage">
+            <input_port name="message">Message to send</input_port>
+            <input_port default="TELEGRAM" name="service">Service to use. Can be {EMAIL, TELEGRAM}</input_port>
+        </Action>
+        <Action ID="SetDelayAfterLaunch">
+            <output_port default="{delay}" name="delay"/>
+            <input_port default="{launch_file}" name="launch_file"/>
+        </Action>
+        <Action ID="SetKillGroups">
+            <output_port name="curr_kill_group" type="std::string"/>
+            <input_port name="parameter_set" type="std::string"/>
+        </Action>
+        <Action ID="Speak">
+            <input_port name="text" type="std::string"/>
+        </Action>
+        <Action ID="StartLaunchFile">
+            <inout_port name="blocked_groups" type="std::map&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, ros::Time, std::less&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt;, std::allocator&lt;std::pair&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const, ros::Time&gt; &gt; &gt;"/>
+            <input_port name="group_block" type="std::string"/>
+            <input_port name="launch_file" type="std::string"/>
+            <input_port name="pkg" type="std::string"/>
+        </Action>
+        <Action ID="StartLaunchFiles">
+            <output_port name="launch_file"/>
+            <output_port name="pkg"/>
+        </Action>
+        <Condition ID="StatMonitor">
+            <input_port name="description"/>
+        </Condition>
+        <Condition ID="StatusError">
+            <input_port name="description" type="std::string"/>
+            <input_port name="error_level" type="double"/>
+            <input_port name="key" type="std::string"/>
+        </Condition>
+        <Condition ID="StatusInfo">
+            <input_port name="description" type="std::string"/>
+            <input_port name="error_level" type="double"/>
+            <input_port name="key" type="std::string"/>
+        </Condition>
+        <Action ID="StatusToParamServer">
+            <input_port name="description" type="std::string"/>
+            <input_port name="key" type="std::string"/>
+            <input_port name="rewrite_stamp" type="bool"/>
+        </Action>
+        <Condition ID="StatusWarn">
+            <input_port name="description" type="std::string"/>
+            <input_port name="error_level" type="double"/>
+            <input_port name="key" type="std::string"/>
+        </Condition>
+        <Condition ID="TimePassed">
+            <input_port name="duration" type="double"/>
+            <input_port name="timestamp" type="double"/>
+        </Condition>
+        <Condition ID="TopicMonitor">
+            <input_port name="description"/>
+        </Condition>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
+

@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!--
+
+/**
+* @file   mongodb_to_rosbag.launch
+* @author Marvin Stüde (Marvin.Stuede@imes.uni-hannover.de)
+* @date   05/2020
+*
+* @brief  Converts messages from mongodb to a rosbag
+*/
+-->
+<launch>
+
+    <arg name="topics" default="PARAM" doc="Topics to read, default PARAM reads topics from parameter server (~log_topics)"/>
+    <arg name="start" doc="Start time. Formatted 'd/m/y H:M' e.g. '06/07/14 06:38'"/>
+    <arg name="end" doc="End time. Formatted 'd/m/y H:M' e.g. '06/07/14 06:38'"/>
+    <arg name="cfg_path_unthrottled" default="$(find cmr_logging)/cfg/log_topics_unthrottled_nav.yaml" doc="Absolute path to yaml file containing unthrottled topics to log"/>
+    <arg name="cfg_path_throttled" default="$(find cmr_logging)/cfg/log_topics_throttled_nav.yaml" doc="Absolute path to yaml file containing throttled topics to log"/>
+
+    <arg name="name_prefix" default="mongodb" doc="Prefix of bagfile name before date" />
+    <arg name="mongodb_name" default="sobi_logging" doc="Name of database" />
+
+    <group ns="mongodb_to_rosbag">
+        <!-- Load topics that were recorded directly -->
+        <rosparam command="load" file="$(arg cfg_path_unthrottled)" />
+        <!-- Load topics that were throttled -->
+        <rosparam command="load" file="$(arg cfg_path_throttled)" />
+        <!-- Create a param with a list of all topics that should be logged -->
+        <node pkg="cmr_logging" type="topics_to_param.py" name="topics_to_param" args="$(arg cfg_path_throttled)" output="screen"/>
+
+        <!-- MongoDB config to parameter server -->
+        <rosparam command="load" subst_value="true" file="$(find cmr_logging)/cfg/mongodb_config.yaml" />
+
+        <node pkg="mongodb_store" type="mongodb_to_rosbag.py" name="mongodb_to_rosbag" output="screen"
+            args="--mongodb-name=$(arg mongodb_name) -s '$(arg start)' -e '$(arg end)' -o $(arg name_prefix) $(arg topics)"/>
+    </group>
+
+</launch>

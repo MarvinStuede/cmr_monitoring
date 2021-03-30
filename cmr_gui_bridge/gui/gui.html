@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+crossorigin="anonymous">
+<script type="text/javascript" src="https://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="https://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.7.3/nipplejs.js"></script>
+<script type="text/javascript" src="http://static.robotwebtools.org/threejs/current/three.min.js"></script>
+<script type="text/javascript" src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="http://static.robotwebtools.org/ros3djs/current/ros3d.min.js"></script>
+<script src="http://static.robotwebtools.org/EaselJS/current/easeljs.min.js"></script>
+<script src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script src="http://static.robotwebtools.org/roslibjs/current/roslib.js"></script>
+<script src="http://static.robotwebtools.org/ros2djs/current/ros2d.js"></script>
+<script type="text/javascript" src="http://static.robotwebtools.org/nav2djs/current/nav2d.min.js"></script> 
+<script type="text/javascript" src="OccGridColored.js"></script>  
+
+<script type="text/javascript" type="text/javascript">
+
+
+  var ros = new ROSLIB.Ros({
+    url : 'ws://cmr01:9090/'
+  });
+
+  ros.on('connection', function() {
+    document.getElementById("status").innerHTML = "Connected";
+  });
+
+  ros.on('error', function(error) {
+    document.getElementById("status").innerHTML = "Error";
+  });
+
+  ros.on('close', function() {
+    document.getElementById("status").innerHTML = "Closed";
+  });
+  var txt_listener = new ROSLIB.Topic({
+    ros : ros,
+    name : '/cmr_monitoring/activity',
+    messageType : 'std_msgs/String'
+  });
+
+function init() {
+// Create the main .
+	var viewer = new ROS2D.Viewer({ 
+		divID : 'nav',
+		width : 700,
+		height : 800
+     	});
+
+    // Setup the nav client
+      	var nav = NAV2D.OccupancyGridClientNav({ 
+		ros : ros,
+		rootObject : viewer.scene,
+		viewer : viewer,
+		withOrientation : true,
+		serverName : '/initial_pose_action'
+	});
+  // Setup the costmap client.
+    	var gridClient = new OccupancyGridClient({
+      		ros : ros,
+		rootObject : viewer.scene,
+		topic: '/move_base/local_costmap/costmap',
+	        continuous : 'true'
+	});
+
+ createJoystick();
+}
+  txt_listener.subscribe(function(m) {
+    var res = m.data.substring(0, 3);
+    if (res=="1.0" || res=="0.7" ){
+    document.getElementById("err").innerHTML = m.data;
+    } else if (res=="0.5" || res=="0.3" ){
+    document.getElementById("war").innerHTML = m.data;
+    } else if (res=="0.0" ){
+    document.getElementById("inf").innerHTML = m.data;
+    } else {
+    document.getElementById("rec").innerHTML = m.data;
+    }
+    console.log("Monitoring message recieved!");
+
+  });
+
+
+  cmd_vel_listener = new ROSLIB.Topic({
+    ros : ros,
+    name : "/cmd_vel",
+    messageType : 'geometry_msgs/Twist'
+  });
+
+  move = function (linear, angular) {
+    var twist = new ROSLIB.Message({
+      linear: {
+        x: linear,
+        y: 0,
+        z: 0
+      },
+      angular: {
+        x: 0,
+        y: 0,
+        z: angular
+      }
+    });
+    cmd_vel_listener.publish(twist);
+  }
+    createJoystick = function () {
+      var options = {
+        zone: document.getElementById('zone_joystick'),
+        threshold: 0.1,
+        position: { left: 50 + '%' },
+        mode: 'static',
+        size: 150,
+        color: '#000000',
+      };
+      manager = nipplejs.create(options);
+
+      linear_speed = 0;
+      angular_speed = 0;
+
+      self.manager.on('start', function (event, nipple) {
+        console.log("Movement start");
+            timer = setInterval(function () {
+                move(linear_speed, angular_speed);
+                }, 25);
+      });
+
+      self.manager.on('move', function (event, nipple) {
+        console.log("Moving");
+        max_linear = 0.50; // m/s
+        max_angular = 0.70; // rad/s
+        max_distance = 75.0; // pixels;
+        linear_speed = Math.sin(nipple.angle.radian) * max_linear * nipple.distance/max_distance;
+        angular_speed = -Math.cos(nipple.angle.radian) * max_angular * nipple.distance/max_distance;
+      });
+
+      self.manager.on('end', function () {
+        console.log("Movement end");
+            if (timer) {
+                clearInterval(timer);
+                }
+                self.move(0, 0);
+      });
+    }
+    window.onload = function () {
+      createJoystick();
+    }
+
+  controlling = new ROSLIB.Topic({
+    ros : ros,
+    name : "/controlling",
+    messageType : 'std_msgs/String'
+  });
+
+  res = function (name) {
+    var cont = new ROSLIB.Message({
+        data:name
+    });
+    controlling.publish(cont);
+    alert(name+" restarted.");
+  }
+
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+.alert {
+  padding: 20px;
+  background-color: #f44336;
+  color: white;
+  opacity: 1;
+  transition: opacity 0.6s;
+  margin-bottom: 15px;
+}
+
+.alert.success {background-color: #4CAF50;}
+.alert.info {background-color: #2196F3;}
+.alert.warning {background-color: #ff9800;}
+
+.closebtn {
+  margin-left: 15px;
+  color: white;
+  font-weight: bold;
+  float: right;
+  font-size: 22px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.closebtn:hover {
+  color: black;
+}
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+.dropbtn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+.dropdown-content a:hover {background-color: #ddd;}
+
+.dropdown:hover .dropdown-content {display: block;}
+
+.dropdown:hover .dropbtn {background-color: #3e8e41;}
+</style>
+</head>
+
+<body onload=init()>
+<div id="app" class="container">
+        <div class="jumbotron">
+                <h1>CMR User Interface</h1>
+        </div>
+
+</div>
+
+<div class="container" >
+
+        <div class="row" style="max-height:1000px;">
+                <div class="col-md-6">
+                        <h3>Connection status</h3>
+                        <br>
+                        <br>
+                          <p class="text-success">Status: <span id="status"></span></p>
+
+                          <br>
+                          <br>
+
+
+                </div>
+                <div class="col-md-6" style="max-height:400px;">
+                        <h3>Joystick</h3>
+                        <br>
+                        <br>
+                        <div id="zone_joystick" style="position: relative;"></div>
+                        <br>
+                </div>
+         <hr>
+                <div class="col-md-6">
+                        <h3>Robot's front camera</h3>
+                        <br>
+                        <img src="http://cmr01:8087/stream?topic=/cam_front/color/image_rect_color_relay&height=500&width=500"></img>
+                </div>
+                <div class="col-md-6">
+                        <h3>Robot's back camera</h3>
+                        <br>
+                        <img src="http://cmr01:8087/stream?topic=/cam_back/rotated/color/image_rect_color&height=500&width=500"></img>
+                </div>
+        <br>
+	<hr>
+	<div class="container">
+		<h3>Robot Position</h3>
+		<br>
+		<div class="row" style="max-height:1000px;">
+
+			<div id="nav"></div>
+		
+	</div>
+</div>
+<hr>
+
+<div class="container" >
+
+        <div class="row" style="max-height:1000px;">
+                <div class="col-md-6">
+                        <h2>Controlling Sensors</h2>
+                        <p>Move the mouse over the button to open the dropdown menu.</p>
+
+                        <div class="dropdown">
+                          <button class="dropbtn">Restart</button>
+                          <div class="dropdown-content">
+                            <a onClick="res('/base');" href="#">Base</a>
+                            <a onClick="res('/cam_back');" href="#">Cameras</a>
+                            <a onClick="res('/velodyne_nodelet_manager');" href="#">Velodyne</a>
+                            <a onClick="res('/xsens_driver');" href="#">IMU</a>
+                            <a onClick="res('/ekf');" href="#">EKF</a>
+                            <a onClick="res('/all');" href="#">ALL</a>
+                          </div>
+                        </div>
+
+                </div>
+                <div class="col-md-6">
+                        <h2>Controlling Hardware</h2>
+                        <p>Move the mouse over the button to open the dropdown menu.</p>
+
+                        <div class="dropdown">
+                          <button class="dropbtn">Fix</button>
+                          <div class="dropdown-content">
+                            <a href="#">CPU-Load</a>
+                            <a href="#">CPU-Temperature</a>
+                            <a href="#">Network</a>
+                            <a href="#">NTP</a>
+                            <a href="#">ALL</a>
+                          </div>
+                        </div>
+
+                </div>
+
+        </div>
+        <br>
+<br>
+</div>
+<hr>
+<h2>Say something</h2>
+
+<form action="/action_page.php">
+  <label for="rep">Type something in the field below and the robot will say it:</label><br>
+  <input type="text" id="rep" name="rep" value="Type something here"><br>
+  <input type="submit" value="Submit">
+</form>
+<hr>
+<div id="map"></div>
+
+<h2>Alert Messages</h2>
+<p>Click on the "x" symbol to close the alert message.</p>
+<div class="alert">
+  <span class="closebtn">&times;</span>
+  <strong>Error!</strong>
+   <div>
+   <p>Last error received: <span id="err"></span></p>
+   </div>
+</div>
+
+<div class="alert warning">
+  <span class="closebtn">&times;</span>
+   <strong>Warning!</strong>
+   <div>
+   <p>Last warning received: <span id="war"></span></p>
+   </div>
+</div>
+<div class="alert info">
+  <span class="closebtn">&times;</span>
+  <strong>Info!</strong>
+  <div>
+  <p>Last info received: <span id="inf"></span></p>
+  </div>
+</div>
+<div class="alert success">
+  <span class="closebtn">&times;</span>
+  <strong>Success!</strong>
+  <div>
+  <p>Last recovery received: <span id="rec"></span></p>
+  </div>
+</div>
+<script>
+var close = document.getElementsByClassName("closebtn");
+var i;
+
+for (i = 0; i < close.length; i++) {
+  close[i].onclick = function(){
+    var div = this.parentElement;
+    div.style.opacity = "0";
+    setTimeout(function(){ div.style.display = "none"; }, 600);
+  }
+}
+</script>
+<embed src="C://home/Desktop/input.txt" width="500" height="300">
+ <canvas id="myCanvas" width="1040" height="100" style="border:1px solid #000000;">
+</canvas>
+<script>
+var c = document.getElementById("myCanvas");
+var ctx = c.getContext("2d");
+ctx.font = "30px Arial";
+ctx.fillText("Here come the intervention logs!", 10, 50);
+</script>
+
+</body>
+</html>

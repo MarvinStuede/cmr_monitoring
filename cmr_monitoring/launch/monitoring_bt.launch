@@ -1,0 +1,14 @@
+<!-- Launch file to start the monitoring BT -->
+<?xml version="1.0"?>
+<launch>
+    <env name="ROSCONSOLE_CONFIG_FILE"
+     value="$(find cmr_monitoring)/cfg/rosconsole.config"/>
+   <!-- <node pkg="roslaunch_axserver" type="roslaunch_server.py" name="roslaunch_server" output="screen"/>-->
+    <node pkg="cmr_monitoring" type="monitoring_bt" name="monitoring_bt" output="screen">
+        <param name="max_dur_error" value="15.0"/>
+        <!-- Load phrases to send to supervisors for specific errors -->
+        <rosparam command="load" file="$(find cmr_monitoring)/cfg/messages.yaml"/>
+        <!-- Load mappings between node names, launch files, topics, etc. -->
+        <rosparam command="load" file="$(find cmr_monitoring)/cfg/mappings.yaml"/>
+    </node>
+</launch>

@@ -1,0 +1,24 @@
+# Nodes to monitor during Charging configuration
+frequency: 0.2
+nodes: [/rosout]
+nodes_charging: [
+    /base/relayboard_v2/relayboard_v2_node,
+    /battery_monitoring,
+    #    /sobi/speech/conv_control,
+    /sobi/speech/nlp,
+    /sobi/speech/respeaker_node,
+    /sobi/speech/stt_action,
+    /sobi/speech/tts_action,
+    /sobi/led_strips,
+    /sobi/led_panel,
+    /sobi/controller_spawner,
+    /sobi/ear_hw_node,
+    /sobi/message_node,
+    /roslaunch_dock,
+    /undock
+]
+
+monitoring:
+    frequency: 0.2
+monitor_mode : 2
+#AggregationStrategies mode: 1 LAST, 2 FIRST, 3 MIN, 4 MAX, 5 AVG#

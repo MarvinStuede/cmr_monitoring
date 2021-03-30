@@ -1,0 +1,46 @@
+# Topics to throttle
+throttled_topics:
+  # Each block defined by a frequency and corresponding topics
+  freq01:
+    frequency: 0.1
+    topics:
+      - /battery_monitoring/battery_charge_state
+      - /base/relayboard_v2/battery_state
+      - /base/relayboard_v2/state
+      - /base/relayboard_v2/emergency_stop_state
+      - /diagnostics
+      - /rtabmap/info
+  freq02:
+    frequency: 0.2
+    topics:
+      - /blocked_side
+      - /monitored_navigation/status
+      - /move_base/local_costmap/costmap
+      - /move_base/status
+      - /topological_navigation/status
+  freq05:
+    frequency: 0.5
+    topics:
+      - /line_segments
+      - /cmd_vel
+      - /cmd_vel_safe
+      - /cmd_vel_us
+  freq025:
+    frequency: 0.25
+    topics:
+      - /move_base/current_goal
+      - /odometry/filtered
+      - /robot_pose
+      - /tf
+  freq1:
+    frequency: 1.0
+    topics:
+      - /two_d_laser_charging_station_corner_marker
+      - /two_d_laser_charging_station_pose_marker
+      - /two_d_laser_charging_station_landmark_pose
+# Latched topics to republish in desired frequency
+latched_topics:
+  freq1:
+    frequency: 0.0025
+    topics:
+      - /tf_static

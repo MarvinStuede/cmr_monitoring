@@ -1,0 +1,2 @@
+unthrottled_topics:
+  - /rosout_agg

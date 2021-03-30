@@ -1,0 +1,2 @@
+# Configuration to define messages to send in case of errors
+localization_lost: "I lost localization :(. Please check http://10.144.254.60:8000/gui.html and give me a hint. If successful choose /fixed. If not successful choose /not_fixed."

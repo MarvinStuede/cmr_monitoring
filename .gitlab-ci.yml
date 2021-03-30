@@ -1,0 +1,35 @@
+image: osrf/ros:kinetic-desktop-full-xenial
+
+variables:
+  WSTOOL_RECURSIVE: "true"
+  PKGS: 'cmr_monitoring'
+
+before_script:
+ - echo "Adding SSH key..."
+ - curl -s http://lcas.lincoln.ac.uk/repos/public.key | apt-key add -
+ - apt-get update -y && apt-get install openssh-client software-properties-common wget libproj-dev -y
+ - apt-add-repository http://lcas.lincoln.ac.uk/ubuntu/main
+ - apt-get update -y
+ - apt-get install ros-kinetic-spencer-tracking-msgs ros-kinetic-strands-apps -y
+ - eval $(ssh-agent -s)
+ - mkdir -p ~/.ssh
+ - chmod 700 ~/.ssh
+ - touch ~/.ssh/known_hosts
+ - chmod 600 ~/.ssh/known_hosts
+ - echo "$SSH_KEY" | tr -d '\r' | ssh-add -
+ - ssh-keyscan gitlab.projekt.uni-hannover.de | tee -a ~/.ssh/known_hosts
+ - git clone https://gitlab.com/VictorLamoine/ros_gitlab_ci.git
+ - source ros_gitlab_ci/gitlab-ci.bash >/dev/null
+ - cd ${CI_PROJECT_DIR}/catkin_workspace
+
+cache:
+  paths:
+    - ccache/
+
+
+catkin tools_tests:
+  stage: test
+  script:
+    - catkin build
+ #   - catkin build --verbose --force-color $PKGS --no-deps --catkin-make-args run_tests
+ #   - catkin_test_results # Check if one of the tests failed!

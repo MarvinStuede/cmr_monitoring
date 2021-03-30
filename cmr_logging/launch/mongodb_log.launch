@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!--
+
+/**
+* @file   mongodb_log.launch
+* @author Marvin Stüde (Marvin.Stuede@imes.uni-hannover.de)
+* @date   01/2021
+*
+* @brief  Starts mongo_db log node to log topics
+*/
+-->
+<launch>
+    <arg name="topics" default="PARAM" doc="Topics to log, default PARAM reads topics from parameter server (~log_topics)"/>
+    <!-- Load config and arguments to parameter server -->
+    <rosparam command="load" subst_value="true" file="$(find cmr_logging)/cfg/mongodb_config.yaml" />
+    <!-- Script Workaround because every topic creates a new node, otherwise roslaunch would overwrite node name -->
+    <node pkg="cmr_logging" type="mongodb_log.sh" name="mongodb_log" output="screen" args="$(arg topics)"/>
+
+</launch>

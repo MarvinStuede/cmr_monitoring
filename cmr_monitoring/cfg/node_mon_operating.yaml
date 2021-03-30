@@ -1,0 +1,70 @@
+# Nodes to monitor during "Operating" (normal) configuration
+frequency: 0.2
+nodes: [/rosout]
+nodes_operating: [
+    # Platform
+    /base/laser,
+    /base/laser/laser_filter,
+    /base/neo_kinematics_differential_node,
+    /base/relayboard_v2/relayboard_v2_node,
+    /base/us_avoid_collision,
+    /base/velocity_smoother,
+    /battery_monitoring,
+    # Cameras
+    /cam_back/realsense2_camera_manager,
+    #    /cam_back/republish_rgbd_sync_velo_back_rgb,
+    /cam_back/rgbd_sync_back,
+    #/cam_back/rgbd_sync_velo_back,
+    /cam_back/rotate_image_depth,
+    /cam_back/rotate_image_rgb,
+    /cam_front/realsense2_camera_manager,
+    # /cam_front/republish_rgbd_sync_velo_front_rgb,
+    /cam_front/rgbd_sync_front,
+    #/cam_front/rgbd_sync_velo_front,
+    # 3D Scanner
+    /pcl_repub_velo,
+    /pointcloud_to_laserscan_node,
+    /robot_state_publisher,
+    /velodyne_nodelet_manager,
+    /velodyne_nodelet_manager_driver,
+    /velodyne_nodelet_manager_transform,
+    # Odometry
+    /ekf,
+    /xsens_driver,
+    # Social
+    #    /sobi/speech/conv_control,
+    /sobi/speech/nlp,
+    /sobi/speech/respeaker_node,
+    /sobi/speech/stt_action,
+    /sobi/speech/tts_action,
+    /sobi/led_strips,
+    /sobi/led_panel,
+    /sobi/controller_spawner,
+    /sobi/ear_hw_node,
+    /sobi/message_node,
+    # Localization
+    /rtabmap/rtabmap,
+    /cmr_lidarloop/lidar_loopdetection,
+    /cmr_lidarloop/lidar_loopdetector_server,
+    /cmr_lidarloop/lidar_registration_server,
+    # Navigation
+    /move_base,
+    /topological_map_manager,
+    /topological_navigation,
+    /topological_localisation,
+    # People perception
+    # /spencer/perception_internal/people_tracking/srl_nearest_neighbor_tracker,
+    # /darknet_ros_front,
+    # /object3d_detector_fast,
+    #    /spencer/perception_internal/detected_person_association/fuse_lasers_and_velo,
+    # /spencer/perception_internal/detected_person_association/convert_final_composite_detections_to_detections,
+    # Docking
+    /roslaunch_dock,
+    /undock,
+    /no_mask_detection
+]
+
+monitoring:
+    frequency: 0.2 
+monitor_mode : 2
+#AggregationStrategies mode: 1 LAST, 2 FIRST, 3 MIN, 4 MAX, 5 AVG#

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>cmr_logging</name>
+    <version>0.1.0</version>
+    <description>
+        This package contains functions related to logging playback
+    </description>
+    <maintainer email="Marvin.Stuede@imes.uni-hannover.de">Marvin Stuede</maintainer>
+    <license>BSD</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <depend>mongodb_store</depend>
+    <depend>topic_tools</depend>
+    <depend>python-pathlib</depend>
+
+
+</package>

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>cmr_gui_bridge</name>
+  <version>0.1.0</version>
+  <description>The cmr_gui_bridge package</description>
+
+  <maintainer email="Marvin.Stuede@imes.uni-hannover.de">Marvin Stuede</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>rosbridge_server</build_depend>
+  <build_export_depend>rosbridge_server</build_export_depend>
+  <exec_depend>rosbridge_server</exec_depend>
+  <depend>web_video_server</depend>
+</package>
